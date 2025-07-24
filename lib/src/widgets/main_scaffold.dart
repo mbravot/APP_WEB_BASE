@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/tarja_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/permisos_provider.dart';
 import '../theme/app_theme.dart';
 import 'sucursal_selector.dart';
 import 'user_info.dart';
@@ -28,8 +26,6 @@ class MainScaffold extends StatelessWidget {
 
   void _handleRefresh(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final tarjaProvider = Provider.of<TarjaProvider>(context, listen: false);
-    final permisosProvider = Provider.of<PermisosProvider>(context, listen: false);
     
     // Mostrar indicador de carga
     ScaffoldMessenger.of(context).showSnackBar(
@@ -61,16 +57,6 @@ class MainScaffold extends StatelessWidget {
       } else {
         // Actualización por defecto
         await authProvider.checkAuthStatus();
-        
-        // Recargar permisos si no están cargados
-        if (!permisosProvider.permisosCargados) {
-          await permisosProvider.recargarPermisos();
-        }
-        
-        // Si hay TarjaProvider disponible, recargar tarjas
-        if (tarjaProvider != null) {
-          await tarjaProvider.cargarTarjas();
-        }
       }
 
       // Mostrar mensaje de éxito
@@ -114,7 +100,7 @@ class MainScaffold extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(title ?? 'LH Gestión Tarjas'),
+        title: Text(title ?? 'App Base Web'),
         bottom: bottom,
         actions: [
           const UserInfo(),

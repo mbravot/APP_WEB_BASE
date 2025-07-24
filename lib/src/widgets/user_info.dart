@@ -15,7 +15,7 @@ class UserInfo extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final userName = userData['nombre'] ?? 'Usuario';
+    final userName = userData?['nombre'] ?? 'Usuario';
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

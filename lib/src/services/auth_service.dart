@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
-  final String baseUrl = 'http://192.168.1.60:5000/api';
+  final String baseUrl = 'http://192.168.1.37:5000/api';
   final storage = const FlutterSecureStorage();
 
   //Login
@@ -37,14 +37,14 @@ class AuthService {
         await storage.write(key: 'token', value: data['access_token']);
         
         // Guardar los datos del usuario individualmente
-        await storage.write(key: 'nombre', value: data['nombre_usuario'] ?? data['usuario']);
+        await storage.write(key: 'nombre', value: data['nombre'] ?? data['usuario']);
         await storage.write(key: 'id_sucursal', value: data['id_sucursal']?.toString());
         await storage.write(key: 'nombre_sucursal', value: data['sucursal_nombre']);
         await storage.write(key: 'id_rol', value: data['id_rol']?.toString());
         
         // Guardar los datos completos del usuario
         await storage.write(key: 'user_data', value: json.encode({
-          'nombre': data['nombre_usuario'] ?? data['usuario'],
+          'nombre': data['nombre'] ?? data['usuario'],
           'id_sucursal': data['id_sucursal'],
           'nombre_sucursal': data['sucursal_nombre'],
           'id_rol': data['id_rol'],
@@ -130,7 +130,7 @@ class AuthService {
       if (token == null) throw Exception('No autorizado');
 
       final response = await http.get(
-        Uri.parse('$baseUrl/auth/sucursales'),
+        Uri.parse('$baseUrl/sucursales/'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/permisos_provider.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
-import 'dashboard_screen.dart';
-import 'revision_tarjas_screen.dart';
-import 'aprobacion_tarjas_screen.dart';
 import 'cambiar_clave_screen.dart';
-import 'ejemplo_permisos_screen.dart';
+import 'cambiar_sucursal_screen.dart';
 import '../widgets/sucursal_selector.dart';
 import '../widgets/main_scaffold.dart';
-import '../widgets/permiso_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,20 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
-  int _selectedIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    // Cargar permisos automáticamente si no están cargados
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final permisosProvider = context.read<PermisosProvider>();
-      if (!permisosProvider.permisosCargados) {
-        print('🔍 Cargando permisos automáticamente en HomeScreen...');
-        permisosProvider.cargarPermisos();
-      }
-    });
-  }
 
   @override
   void dispose() {
@@ -177,384 +158,375 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    return MainScaffold(
-      title: 'LH Gestión Tarjas',
-      onRefresh: () async {
-        await authProvider.checkAuthStatus();
-      },
-      body: Column(
+  Widget _buildDashboardContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _isSearching
-            ? _buildSearchField()
-                : _selectedIndex == 0
-                    ? DashboardScreen()
-                    : RevisionTarjasScreen(),
-          ),
-        ],
-      ),
-      drawer: _isSearching ? null : Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
+          // Tarjeta de bienvenida
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.1),
+                    AppTheme.accentColor.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 35,
-                          color: AppTheme.primaryColor,
-                        ),
+                      Icon(
+                        Icons.dashboard,
+                        size: 32,
+                        color: AppTheme.primaryColor,
                       ),
-                      IconButton(
-                        icon: Icon(
-                          themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                          color: Colors.white,
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Bienvenido a tu Dashboard',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        onPressed: () => themeProvider.toggleTheme(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  if (authProvider.userData != null) ...[
-                    Text(
-                      authProvider.userData!['nombre'] ?? 'Usuario',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Esta es tu aplicación base. Aquí puedes agregar las funcionalidades específicas que necesites.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Sucursal: ${authProvider.userData!['nombre_sucursal'] ?? 'No especificada'}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
-            // Dashboards
-            const _MenuHeader(title: 'Dashboards'),
-            _MenuItem(
-              icon: Icons.dashboard,
-              title: 'Dashboard Administrativas',
-              onTap: () => _navigateTo(context, const DashboardScreen()),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Sección de estadísticas rápidas
+          const Text(
+            'Estadísticas Rápidas',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            _MenuItem(
-              icon: Icons.assignment,
-              title: 'Dashboard Tarjas',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            // Gestión de Tarjas
-            const _MenuHeader(title: 'Gestión de Tarjas'),
-            _MenuItem(
-              icon: Icons.factory,
-              title: 'Avance por Plantas',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            PermisoWidget(
-              idPermiso: 2,
-              child: _MenuItem(
-                icon: Icons.search,
-              title: 'Revisión de Tarjas',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RevisionTarjasScreen()),
-                );
-              },
+          ),
+          const SizedBox(height: 16),
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Total Items',
+                  '0',
+                  Icons.inventory,
+                  AppTheme.primaryColor,
+                ),
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'Pendientes',
+                  '0',
+                  Icons.pending,
+                  AppTheme.warningColor,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Completados',
+                  '0',
+                  Icons.check_circle,
+                  AppTheme.successColor,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'En Proceso',
+                  '0',
+                  Icons.schedule,
+                  AppTheme.infoColor,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Sección de acciones rápidas
+          const Text(
+            'Acciones Rápidas',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            PermisoWidget(
-              idPermiso: 3,
-              child: _MenuItem(
-                icon: Icons.fact_check,
-                title: 'Aprobación de Tarjas',
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AprobacionTarjasScreen()),
+          ),
+          const SizedBox(height: 16),
+          
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.5,
+            children: [
+              _buildActionCard(
+                'Nuevo Item',
+                Icons.add,
+                AppTheme.primaryColor,
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Función de nuevo item - Implementar según necesidades'),
+                      duration: Duration(seconds: 2),
+                    ),
                   );
                 },
               ),
-            ),
-            _MenuItem(
-              icon: Icons.business,
-              title: 'Tarja Propios',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.engineering,
-              title: 'Tarja Contratista',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
+              _buildActionCard(
+                'Ver Reportes',
+                Icons.assessment,
+                AppTheme.accentColor,
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Función de reportes - Implementar según necesidades'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              _buildActionCard(
+                'Configuración',
+                Icons.settings,
+                AppTheme.infoColor,
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Función de configuración - Implementar según necesidades'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              _buildActionCard(
+                'Ayuda',
+                Icons.help,
+                AppTheme.warningColor,
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Función de ayuda - Implementar según necesidades'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Gestión de Personal
-            const _MenuHeader(title: 'Gestión de Personal'),
-            _MenuItem(
-              icon: Icons.person_outline,
-              title: 'Ficha Personal',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: color,
             ),
-            _MenuItem(
-              icon: Icons.medical_services,
-              title: 'Licencias',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
-            _MenuItem(
-              icon: Icons.beach_access,
-              title: 'Vacaciones',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.time_to_leave,
-              title: 'Permisos',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.person_off,
-              title: 'Inasistencias',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            // Gestión de Trabajadores
-            const _MenuHeader(title: 'Gestión de Trabajadores'),
-            _MenuItem(
-              icon: Icons.groups,
-              title: 'Trabajadores',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.person_add,
-              title: 'Pre-enrolados',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.person_off_outlined,
-              title: 'Desactivar Usuarios',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            // Control de Horas y Bonos
-            const _MenuHeader(title: 'Control de Horas y Bonos'),
-            _MenuItem(
-              icon: Icons.access_time,
-              title: 'Horas Trabajadas',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.more_time,
-              title: 'Horas Extras',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.card_giftcard,
-              title: 'Bono Especial',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            // Reportes y Edición
-            const _MenuHeader(title: 'Reportes y Edición'),
-            _MenuItem(
-              icon: Icons.analytics,
-              title: 'Detalle Mano de Obra',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            // Sistema de Permisos
-            const _MenuHeader(title: 'Sistema de Permisos'),
-            _MenuItem(
-              icon: Icons.security,
-              title: 'Ejemplo de Permisos',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const EjemploPermisosScreen()),
-                );
-              },
-            ),
-            _MenuItem(
-              icon: Icons.bug_report,
-              title: 'Debug Permisos',
-              onTap: () {
-                Navigator.pop(context);
-                final permisosProvider = Provider.of<PermisosProvider>(context, listen: false);
-                print('🔍 Debug - Permisos actuales:');
-                print('   - Total: ${permisosProvider.permisos.length}');
-                for (var permiso in permisosProvider.permisos) {
-                  print('   - ID: ${permiso['id']} (${permiso['id'].runtimeType}), Nombre: ${permiso['nombre']}');
-                }
-                print('🔍 Debug - Verificando permiso ID 2: ${permisosProvider.tienePermisoPorId(2)}');
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Permisos: ${permisosProvider.permisos.length}, ID 2: ${permisosProvider.tienePermisoPorId(2)}'),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              },
-            ),
-            _MenuItem(
-              icon: Icons.upload_file,
-              title: 'Carga Agriprime',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-            _MenuItem(
-              icon: Icons.edit,
-              title: 'Edición de Datos',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implementar navegación
-              },
-            ),
-
-            const Divider(),
-            _MenuItem(
-              icon: Icons.lock,
-              title: 'Cambiar Contraseña',
-              iconColor: Colors.amber,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CambiarClaveScreen()),
-                );
-              },
-            ),
-            _MenuItem(
-              icon: Icons.exit_to_app,
-              title: 'Cerrar Sesión',
-              iconColor: AppTheme.errorColor,
-              onTap: () {
-                Navigator.pop(context);
-                _confirmarCerrarSesion(context, authProvider);
-              },
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class _MenuHeader extends StatelessWidget {
-  final String title;
-
-  const _MenuHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: Theme.of(context).primaryColor,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+  Widget _buildActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 32,
+                color: color,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color? iconColor;
-
-  const _MenuItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.iconColor,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: iconColor ?? Theme.of(context).primaryColor,
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return MainScaffold(
+      title: 'App Base Web',
+      onRefresh: () async {
+        await authProvider.checkAuthStatus();
+      },
+      drawer: _buildDrawer(context, authProvider, themeProvider),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isSearching
+                ? _buildSearchField()
+                : _buildDashboardContent(),
+          ),
+        ],
       ),
-      title: Text(title),
-      onTap: onTap,
-      dense: true,
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, AuthProvider authProvider, ThemeProvider themeProvider) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.person,
+                    size: 35,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  authProvider.userData?['nombre'] ?? 'Usuario',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Sucursal: ${authProvider.userData?['nombre_sucursal'] ?? 'No especificada'}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.business, color: AppTheme.primaryColor),
+            title: const Text('Cambiar Sucursal'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CambiarSucursalScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock, color: AppTheme.warningColor),
+            title: const Text('Cambiar Contraseña'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CambiarClaveScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: AppTheme.errorColor),
+            title: const Text('Cerrar Sesión'),
+            onTap: () {
+              Navigator.pop(context);
+              _confirmarCerrarSesion(context, authProvider);
+            },
+          ),
+        ],
+      ),
     );
   }
 } 

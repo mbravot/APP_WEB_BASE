@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/permisos_provider.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 
@@ -40,15 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (success) {
-          // Cargar permisos del usuario
-          try {
-            final permisosProvider = Provider.of<PermisosProvider>(context, listen: false);
-            print('🔍 Iniciando carga de permisos...');
-            await permisosProvider.cargarPermisos();
-            print('🔍 Permisos cargados exitosamente');
-          } catch (e) {
-            print('❌ Error al cargar permisos: $e');
-          }
 
           // Mostrar mensaje de bienvenida
           ScaffoldMessenger.of(context).showSnackBar(
@@ -209,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                     children: [
                       const Text(
-                            "Bienvenido a LH Tarja",
+                            "Bienvenido a XXXXX",
                         style: TextStyle(
                               fontSize: 26,
                           fontWeight: FontWeight.bold,

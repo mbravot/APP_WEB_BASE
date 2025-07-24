@@ -3,8 +3,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/providers/theme_provider.dart';
-import 'src/providers/tarja_provider.dart';
-import 'src/providers/permisos_provider.dart';
 import 'src/screens/splash_screen.dart';
 import 'src/theme/app_theme.dart';
 
@@ -16,8 +14,6 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => TarjaProvider()),
-        ChangeNotifierProvider(create: (_) => PermisosProvider()),
       ],
       child: const MyApp(),
     ),
@@ -32,7 +28,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'LH Gestión Tarjas SM',
+          title: 'App Base Web',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
