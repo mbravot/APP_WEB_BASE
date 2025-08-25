@@ -6,6 +6,10 @@ import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'cambiar_clave_screen.dart';
 import 'cambiar_sucursal_screen.dart';
+import 'actividades_screen.dart';
+import 'parametros_screen.dart';
+import 'produccion_screen.dart';
+import 'riego_screen.dart';
 import '../widgets/sucursal_selector.dart';
 import '../widgets/main_scaffold.dart';
 
@@ -144,7 +148,13 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () => setState(() => _isSearching = true),
       ),
       // Selector de sucursal global
-      const SucursalSelector(),
+      SucursalSelector(
+        selectedSucursal: 'Sucursal Norte',
+        sucursales: ['Sucursal Norte', 'Sucursal Sur', 'Sucursal Este', 'Sucursal Oeste'],
+        onChanged: (value) {
+          // TODO: Implementar cambio de sucursal
+        },
+      ),
       // Botón de tema
       IconButton(
         icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
@@ -190,14 +200,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Icon(
-                        Icons.dashboard,
+                        Icons.agriculture,
                         size: 32,
                         color: AppTheme.primaryColor,
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
-                          'Bienvenido a tu Dashboard',
+                          'Plataforma de Reportería Agrícola',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -208,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Esta es tu aplicación base. Aquí puedes agregar las funcionalidades específicas que necesites.',
+                    'Monitoreo y gestión integral de operaciones agrícolas',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -221,9 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
           
           const SizedBox(height: 24),
           
-          // Sección de estadísticas rápidas
+          // KPIs Principales
           const Text(
-            'Estadísticas Rápidas',
+            'Indicadores Clave de Rendimiento',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -231,23 +241,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           
+          // Primera fila de KPIs
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  'Total Items',
-                  '0',
-                  Icons.inventory,
+                child: _buildKPICard(
+                  'Hectáreas Cultivadas',
+                  '1,250',
+                  'ha',
+                  Icons.agriculture,
                   AppTheme.primaryColor,
+                  '+5.2% vs mes anterior',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildStatCard(
-                  'Pendientes',
-                  '0',
-                  Icons.pending,
-                  AppTheme.warningColor,
+                child: _buildKPICard(
+                  'Producción Total',
+                  '2,450',
+                  'ton',
+                  Icons.grain,
+                  AppTheme.successColor,
+                  '+8.1% vs mes anterior',
                 ),
               ),
             ],
@@ -255,23 +270,28 @@ class _HomeScreenState extends State<HomeScreen> {
           
           const SizedBox(height: 16),
           
+          // Segunda fila de KPIs
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  'Completados',
-                  '0',
-                  Icons.check_circle,
-                  AppTheme.successColor,
+                child: _buildKPICard(
+                  'Eficiencia de Riego',
+                  '87',
+                  '%',
+                  Icons.water_drop,
+                  AppTheme.infoColor,
+                  '+2.3% vs mes anterior',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildStatCard(
-                  'En Proceso',
-                  '0',
-                  Icons.schedule,
-                  AppTheme.infoColor,
+                child: _buildKPICard(
+                  'Personal Activo',
+                  '45',
+                  'personas',
+                  Icons.people,
+                  AppTheme.warningColor,
+                  '3 en licencia médica',
                 ),
               ),
             ],
@@ -279,9 +299,9 @@ class _HomeScreenState extends State<HomeScreen> {
           
           const SizedBox(height: 32),
           
-          // Sección de acciones rápidas
+          // Menú de Módulos tipo Windows
           const Text(
-            'Acciones Rápidas',
+            'Módulos del Sistema',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -292,102 +312,156 @@ class _HomeScreenState extends State<HomeScreen> {
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
+            crossAxisCount: 3,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 1.5,
+            childAspectRatio: 1.2,
             children: [
-              _buildActionCard(
-                'Nuevo Item',
-                Icons.add,
+              _buildModuleCard(
+                'General',
+                Icons.dashboard,
                 AppTheme.primaryColor,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Función de nuevo item - Implementar según necesidades'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                'Gestión general y reportes',
+                () => _showModuleInfo('General'),
               ),
-              _buildActionCard(
-                'Ver Reportes',
-                Icons.assessment,
-                AppTheme.accentColor,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Función de reportes - Implementar según necesidades'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+              _buildModuleCard(
+                'Producción',
+                Icons.grain,
+                AppTheme.successColor,
+                'Control de cultivos y cosechas',
+                () => _showModuleInfo('Producción'),
               ),
-              _buildActionCard(
-                'Configuración',
-                Icons.settings,
+              _buildModuleCard(
+                'Riegos',
+                Icons.water_drop,
                 AppTheme.infoColor,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Función de configuración - Implementar según necesidades'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                'Sistemas de riego y humedad',
+                () => _showModuleInfo('Riegos'),
               ),
-              _buildActionCard(
-                'Ayuda',
-                Icons.help,
+              _buildModuleCard(
+                'Cecos',
+                Icons.account_balance,
+                AppTheme.successColor,
+                'Centros de costo y contabilidad',
+                () => _showModuleInfo('Cecos'),
+              ),
+              _buildModuleCard(
+                'Cuarteles',
+                Icons.grid_on,
                 AppTheme.warningColor,
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Función de ayuda - Implementar según necesidades'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                'Gestión de hileras y plantas',
+                () => _showModuleInfo('Cuarteles'),
+              ),
+              _buildModuleCard(
+                'Mapeo',
+                Icons.map,
+                AppTheme.accentColor,
+                'Visualización geográfica',
+                () => _showModuleInfo('Mapeo'),
+              ),
+              _buildModuleCard(
+                'RRHH',
+                Icons.people,
+                AppTheme.warningColor,
+                'Gestión de personal',
+                () => _showModuleInfo('RRHH'),
+              ),
+              _buildModuleCard(
+                'Actividades',
+                Icons.assignment,
+                AppTheme.accentColor,
+                'Planificación y seguimiento',
+                () => _showModuleInfo('Actividades'),
+              ),
+              _buildModuleCard(
+                'Parámetros',
+                Icons.settings,
+                AppTheme.errorColor,
+                'Configuración del sistema',
+                () => _showModuleInfo('Parámetros'),
               ),
             ],
           ),
+          
+          const SizedBox(height: 32),
+          
+          // Actividades Recientes
+          const Text(
+            'Actividades Recientes',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          _buildRecentActivities(),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildKPICard(String title, String value, String unit, IconData icon, Color color, String trend) {
     return Card(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              size: 32,
-              color: color,
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 24,
+                  color: color,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: color.withOpacity(0.7),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
-              value,
+              trend,
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
+                fontSize: 12,
+                color: trend.contains('+') ? AppTheme.successColor : AppTheme.warningColor,
+                fontWeight: FontWeight.w500,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -395,9 +469,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildModuleCard(String title, IconData icon, Color color, String description, VoidCallback onTap) {
     return Card(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -409,19 +483,37 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: color,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: color,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -430,13 +522,222 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildRecentActivities() {
+    final activities = [
+      {'icon': Icons.grain, 'title': 'Cosecha de trigo completada', 'time': 'Hace 2 horas', 'color': AppTheme.successColor},
+      {'icon': Icons.water_drop, 'title': 'Riego automático activado', 'time': 'Hace 4 horas', 'color': AppTheme.infoColor},
+      {'icon': Icons.people, 'title': 'Nuevo empleado registrado', 'time': 'Hace 6 horas', 'color': AppTheme.warningColor},
+      {'icon': Icons.assignment, 'title': 'Planificación semanal actualizada', 'time': 'Hace 1 día', 'color': AppTheme.accentColor},
+    ];
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: activities.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final activity = activities[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: (activity['color'] as Color).withOpacity(0.1),
+              child: Icon(
+                activity['icon'] as IconData,
+                color: activity['color'] as Color,
+                size: 20,
+              ),
+            ),
+            title: Text(
+              activity['title'] as String,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            subtitle: Text(
+              activity['time'] as String,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey.shade400,
+            ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Ver detalles: ${activity['title']}'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showModuleInfo(String module) {
+    final moduleInfo = {
+      'General': 'Dashboard principal con indicadores generales y reportes consolidados',
+      'Producción': 'Gestión de cultivos, cosechas, rendimientos y planificación agrícola',
+      'Riego': 'Control de sistemas de riego, monitoreo de humedad y eficiencia hídrica',
+      'RRHH': 'Gestión de personal, horarios, capacitaciones y recursos humanos',
+      'Actividades': 'Planificación, seguimiento y control de actividades diarias',
+      'Parámetros': 'Configuración del sistema, parámetros técnicos y ajustes',
+    };
+
+    // Navegar directamente a las pantallas correspondientes
+    switch (module) {
+      case 'Producción':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProduccionScreen()),
+        );
+        break;
+      case 'Riegos':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RiegoScreen()),
+        );
+        break;
+      case 'Cecos':
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Módulo: Cecos'),
+            content: const Text('Gestión de centros de costo y contabilidad - En desarrollo'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Accediendo al módulo: Cecos'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                },
+                child: const Text('Acceder'),
+              ),
+            ],
+          ),
+        );
+        break;
+      case 'Cuarteles':
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Módulo: Cuarteles'),
+            content: const Text('Gestión de hileras y plantas de cuarteles - En desarrollo'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Accediendo al módulo: Cuarteles'),
+                      backgroundColor: AppTheme.warningColor,
+                    ),
+                  );
+                },
+                child: const Text('Acceder'),
+              ),
+            ],
+          ),
+        );
+        break;
+      case 'Mapeo':
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Módulo: Mapeo'),
+            content: const Text('Visualización geográfica y mapas - En desarrollo'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Accediendo al módulo: Mapeo'),
+                      backgroundColor: AppTheme.accentColor,
+                    ),
+                  );
+                },
+                child: const Text('Acceder'),
+              ),
+            ],
+          ),
+        );
+        break;
+      case 'Actividades':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ActividadesScreen()),
+        );
+        break;
+      case 'Parámetros':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ParametrosScreen()),
+        );
+        break;
+      default:
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Módulo: $module'),
+            content: Text(moduleInfo[module] ?? 'Información no disponible'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Accediendo al módulo: $module'),
+                      backgroundColor: AppTheme.primaryColor,
+                    ),
+                  );
+                },
+                child: const Text('Acceder'),
+              ),
+            ],
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
 
     return MainScaffold(
-      title: 'App Base Web',
+      title: 'Plataforma Agrícola',
       onRefresh: () async {
         await authProvider.checkAuthStatus();
       },
@@ -485,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Sucursal: ${authProvider.userData?['nombre_sucursal'] ?? 'No especificada'}',
+                  'Sucursal: ${authProvider.userData?['sucursal_nombre'] ?? 'No especificada'}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -513,6 +814,17 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CambiarClaveScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings, color: AppTheme.primaryColor),
+            title: const Text('Administración de Parámetros'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ParametrosScreen()),
               );
             },
           ),

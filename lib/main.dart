@@ -1,23 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/providers/theme_provider.dart';
-import 'src/screens/splash_screen.dart';
-import 'src/theme/app_theme.dart';
+import 'src/app.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -25,17 +13,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'App Base Web',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const SplashScreen(),
-          debugShowCheckedModeBanner: false,
-        );
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Portal Web Agrícola',
+            theme: themeProvider.currentTheme,
+            home: const App(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
+      ),
     );
   }
-} 
+}

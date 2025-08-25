@@ -1,128 +1,133 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
-  final _storage = const FlutterSecureStorage();
-  bool _isLoading = false;
-  String? _error;
   bool _isAuthenticated = false;
-  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+  String? _token;
+  Map<String, dynamic>? _user;
 
-  bool get isLoading => _isLoading;
-  String? get error => _error;
   bool get isAuthenticated => _isAuthenticated;
-  Map<String, dynamic>? get userData => _userData;
+  bool get isLoading => _isLoading;
+  String? get token => _token;
+  Map<String, dynamic>? get user => _user;
+  Map<String, dynamic>? get userData => _user;
 
   AuthProvider() {
-    _loadUserData();
+    _loadAuthState();
   }
 
-  Future<void> _loadUserData() async {
-    _userData = await _authService.getCurrentUser();
-    _isAuthenticated = _userData != null;
-    notifyListeners();
-  }
-
-  Future<bool> login(String email, String password) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
+  Future<void> _loadAuthState() async {
     try {
-      final response = await _authService.login(email, password);
-      _isAuthenticated = true;
-      await _loadUserData(); // Cargar los datos del usuario después del login
-      _isLoading = false;
-      notifyListeners();
-      return true;
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userData = prefs.getString('user');
+
+      if (token != null && userData != null) {
+        _token = token;
+        _user = jsonDecode(userData);
+        _isAuthenticated = true;
+      }
     } catch (e) {
-      _error = e.toString();
-      _isAuthenticated = false;
-      _userData = null;
+      print('Error loading auth state: $e');
+    } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<String?> getToken() async {
+    if (_token != null) return _token;
+    
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<bool> login(String username, String password) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Llamada real a la API de login
+      final loginData = {
+        'usuario': username,
+        'clave': password,
+      };
+      
+      print('Enviando datos de login: $loginData');
+      
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/api/auth/login'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(loginData),
+      );
+
+      print('Respuesta del servidor: ${response.statusCode}');
+      print('Cuerpo de respuesta: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data['success'] == true) {
+          // Estructura correcta según la respuesta del backend
+          _token = data['access_token'];
+          _user = {
+            'usuario': data['usuario'],
+            'nombre': data['nombre'],
+            'id_sucursal': data['id_sucursal'],
+            'sucursal_nombre': data['sucursal_nombre'],
+            'id_rol': data['id_rol'],
+            'id_perfil': data['id_perfil'],
+          };
+          _isAuthenticated = true;
+
+          // Guardar en SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', _token!);
+          await prefs.setString('user', jsonEncode(_user));
+
+          print('Login exitoso para usuario: ${_user?['usuario']} (${_user?['nombre']})');
+          print('Sucursal: ${_user?['sucursal_nombre']}');
+          return true;
+        } else {
+          print('Login failed: ${data['message'] ?? 'Error desconocido'}');
+          return false;
+        }
+      } else {
+        print('Login failed with status: ${response.statusCode}');
+        print('Error response: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error during login: $e');
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> logout() async {
-    _isLoading = true;
-    notifyListeners();
-    
     try {
-      await _authService.logout();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      await prefs.remove('user');
+
+      _token = null;
+      _user = null;
       _isAuthenticated = false;
-      _userData = null;
-      _error = null;
     } catch (e) {
-      _error = e.toString();
+      print('Error during logout: $e');
     } finally {
-      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> checkAuthStatus() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _loadUserData();
-    } catch (e) {
-      _error = e.toString();
-      _isAuthenticated = false;
-      _userData = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    await _loadAuthState();
   }
-
-  Future<Map<String, dynamic>?> getCurrentUser() async {
-    if (_userData == null) {
-      await _loadUserData();
-    }
-    return _userData;
-  }
-
-  Future<String?> getToken() async {
-    return await _authService.getToken();
-  }
-
-  // Obtener las sucursales disponibles del usuario
-  Future<List<Map<String, dynamic>>> getSucursalesDisponibles() async {
-    try {
-      return await _authService.getSucursalesDisponibles();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  // Cambiar la sucursal activa del usuario
-  Future<bool> cambiarSucursal(String idSucursal) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final result = await _authService.cambiarSucursal(idSucursal);
-      
-      // Recargar los datos del usuario para reflejar el cambio
-      await _loadUserData();
-      
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-} 
+}

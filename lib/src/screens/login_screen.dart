@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,109 +12,53 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usuarioController = TextEditingController();
-  final _claveController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscureText = true;
 
   @override
   void dispose() {
-    _usuarioController.dispose();
-    _claveController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final success = await authProvider.login(
-          _usuarioController.text,
-          _claveController.text,
+        _usernameController.text,
+        _passwordController.text,
+      );
+
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al iniciar sesión'),
+            backgroundColor: AppTheme.errorColor,
+          ),
         );
-
-        if (!mounted) return;
-
-        if (success) {
-
-          // Mostrar mensaje de bienvenida
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('¡Bienvenido!'),
-                ],
-              ),
-              backgroundColor: AppTheme.successColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-            ),
-          );
-
-          // Navegar a HomeScreen y reemplazar la página actual
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        } else {
-          // Mostrar el mensaje de error del AuthProvider
-          final mensaje = authProvider.error ?? 'Usuario o clave incorrectos o sin acceso a la app!';
-          final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
-          if (scaffoldMessenger != null) {
-            scaffoldMessenger.showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(mensaje)),
-                  ],
-                ),
-                backgroundColor: AppTheme.errorColor,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (!mounted) return;
-        String mensaje = 'Usuario o clave incorrectos o sin acceso a la app!';
-        // Si la excepción contiene el mensaje del backend, úsalo
-        if (e is Exception && e.toString().contains('Exception:')) {
-          mensaje = e.toString().replaceFirst('Exception:', '').trim();
-        }
-        final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
-        if (scaffoldMessenger != null) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(mensaje)),
-                ],
-              ),
-              backgroundColor: AppTheme.errorColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        } else {
-          print('No se encontró ScaffoldMessenger en el contexto');
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -123,289 +66,244 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // 📸 Fondo
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/fondo.jpg',
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/fondo.jpg'),
+            fit: BoxFit.cover,
           ),
-          // 🟤 Overlay oscuro
-          Positioned.fill(
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Container(
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.4),
-                  ],
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-            ),
-          ),
-          // 🧾 Contenido principal
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 🟢 Logo con animación de escala
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 600),
-                      tween: Tween<double>(begin: 0.5, end: 1.0),
-                      curve: Curves.easeOutBack,
-                      builder: (context, double value, child) {
-                        return Transform.scale(
-                          scale: value,
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/images/lh.jpg',
-                          height: 80,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withOpacity(0.3),
+                          width: 2,
                         ),
                       ),
+                      child: Image.asset(
+                        'assets/images/lh.jpg',
+                        height: 60,
+                        width: 60,
+                      ),
                     ),
-                    const SizedBox(height: 30),
-                    // 🟢 Título con animación de opacidad
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 800),
-                      tween: Tween<double>(begin: 0.0, end: 1.0),
-                      builder: (context, double value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: child,
-                        );
-                      },
-                      child: Column(
-                    children: [
-                      const Text(
-                            "Bienvenido a XXXXX",
-                        style: TextStyle(
-                              fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black54,
-                                  blurRadius: 3,
-                                  offset: Offset(1, 1),
-                                )
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Inicia sesión para continuar 🌿",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black38,
-                                  blurRadius: 2,
-                                  offset: Offset(0.5, 0.5),
-                                )
-                              ],
-                            ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Portal Web Agrícola',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 3,
+                            color: Colors.black.withOpacity(0.3),
                           ),
                         ],
                       ),
-                      ),
-                    const SizedBox(height: 40),
-                    // 📨 Campo usuario con animación de slide
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 1000),
-                      tween: Tween<Offset>(
-                        begin: const Offset(-1, 0),
-                        end: Offset.zero,
-                      ),
-                      builder: (context, Offset offset, child) {
-                        return Transform.translate(
-                          offset: offset,
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: TextFormField(
-                          controller: _usuarioController,
-                          style: const TextStyle(color: Colors.black),
-                        decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.person, color: AppTheme.primaryColor),
-                            filled: true,
-                            fillColor: Colors.white,
-                            hintText: 'Usuario',
-                            hintStyle: TextStyle(color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                              return 'Por favor ingrese su usuario';
-                          }
-                          return null;
-                        },
-                      ),
-                      ),
                     ),
-                    const SizedBox(height: 20),
-                    // 🔑 Campo clave con animación de slide
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 1200),
-                      tween: Tween<Offset>(
-                        begin: const Offset(1, 0),
-                        end: Offset.zero,
-                      ),
-                      builder: (context, Offset offset, child) {
-                        return Transform.translate(
-                          offset: offset,
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Inicia sesión para continuar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                                color: Colors.black.withOpacity(0.3),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: TextFormField(
-                          controller: _claveController,
-                          obscureText: _obscureText,
-                          style: const TextStyle(color: Colors.black),
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _login(),
-                        decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.lock, color: AppTheme.primaryColor),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                                _obscureText ? Icons.visibility : Icons.visibility_off,
-                                color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                  _obscureText = !_obscureText;
-                              });
-                            },
-                          ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            hintText: 'Clave',
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                              return 'Por favor ingrese su clave';
-                          }
-                          return null;
-                        },
-                      ),
-                      ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.confirmation_number,
+                          color: Colors.orange,
+                          size: 20,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 30),
-                    // 🟢 Botón de login con animación de opacidad
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 1400),
-                      tween: Tween<double>(begin: 0.0, end: 1.0),
-                      builder: (context, double value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: child,
-                        );
+                    const SizedBox(height: 32),
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'Usuario',
+                        hintText: 'Ingrese su Usuario',
+                        prefixIcon: const Icon(Icons.person),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingresa tu usuario';
+                        }
+                        return null;
                       },
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _login,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        hintText: 'Ingrese su Clave',
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.visibility),
+                          onPressed: () {
+                            // TODO: Implementar toggle de visibilidad
+                          },
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingresa tu contraseña';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 3,
                         ),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  'Iniciar Sesión',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Iniciar sesión',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.arrow_forward),
+                                ],
+                              ),
                       ),
-                        ),
-                  ),
                     ),
-                    const SizedBox(height: 30),
-                    // Footer con animación de opacidad
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 1600),
-                      tween: Tween<double>(begin: 0.0, end: 1.0),
-                      builder: (context, double value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: child,
-                        );
-                      },
-                      child: const Text(
-                        "© 2025 La Hornilla - Departamento de TI",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ingresa tus credenciales del sistema',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.8),
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                            color: Colors.black.withOpacity(0.3),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Desarrollado por el departamento de TI de La Hornilla',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.7),
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                            color: Colors.black.withOpacity(0.3),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
-} 
+}
